@@ -5,9 +5,27 @@
  */
 package com.oauth.server.authentication;
 
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider;
+import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProviderClientBuilder;
+import com.amazonaws.services.cognitoidp.model.AdminInitiateAuthRequest;
+import com.amazonaws.services.cognitoidp.model.AdminInitiateAuthResult;
+import com.amazonaws.services.cognitoidp.model.AuthFlowType;
 import com.google.common.collect.ImmutableList;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import com.oauth.server.client.CognitoClient;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -21,6 +39,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import static com.oauth.server.constant.Constant.PATIENT_POOL_CLIENT_ID;
+import static com.oauth.server.constant.Constant.PATIENT_POOL_ID;
+
+
 /**
  * An customized AuthenticationProvider.
  *
@@ -31,8 +53,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
  * @author Lucun Cai
  */
 @RequiredArgsConstructor
+@Log4j2
 public class AuthenticationServiceProvider implements AuthenticationProvider, AuthenticationManager,
     UserDetailsService {
+
+    @Autowired
+    CognitoClient cognitoClient;
 
     private static final List<User> mockUsers = ImmutableList.of(
         new User("user", "$2a$10$tNrknh3ZtTQ4IWq.P1KSaOwIar7ToOM1TjQTmuxGIIjYCJvy.55uS",
@@ -44,21 +70,39 @@ public class AuthenticationServiceProvider implements AuthenticationProvider, Au
 
     @Override
     public Authentication authenticate(final Authentication authentication) throws AuthenticationException {
+
         String username = authentication.getName();
         String password = authentication.getCredentials().toString();
 
-        UserDetails user = loadUserByUsername(username);
-        if (passwordEncoder.matches(password, user.getPassword())) {
-            return new UsernamePasswordAuthenticationToken(user, user.getPassword(), user.getAuthorities());
-        } else {
-            throw new BadCredentialsException("Invalid credential for user " + username);
+        log.info("start verify username {}, password {} ", username, password);
+        Map<String, String> authParams = new HashMap<>();
+        authParams.put("USERNAME", username);
+        authParams.put("PASSWORD", password);
+
+        log.info("Start calling cognito");
+        AdminInitiateAuthResult authResult =
+                cognitoClient.getAuthResult(PATIENT_POOL_ID, PATIENT_POOL_CLIENT_ID, authParams);
+
+        if(authResult.getChallengeName().equals("NEW_PASSWORD_REQUIRED")) {
+            //todo : redirect to change password page
+            return new UsernamePasswordAuthenticationToken(username, password,
+                    ImmutableList.of(new SimpleGrantedAuthority(RoleEnum.UNVERIFIED_USER.name())));
         }
+
+        if(StringUtils.equals(username, "admin")) {
+            return new UsernamePasswordAuthenticationToken(username, password,
+                    ImmutableList.of(new SimpleGrantedAuthority(RoleEnum.ROLE_USER_ADMIN.name())));
+        } else {
+            return new UsernamePasswordAuthenticationToken(username, password,
+                    ImmutableList.of());
+        }
+
     }
 
     @Override
     public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
 
-        //TODO: Integrate with your authentication system in replace the mock users.
+        //TODO: Remove this code
         return mockUsers.stream()
             .filter(u -> u.getUsername().equals(username))
             .findAny()

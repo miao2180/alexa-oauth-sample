@@ -9,6 +9,8 @@ import com.oauth.server.dao.DynamoDBPartnerTokenDAO;
 import com.oauth.server.dto.OAuthPartner;
 import com.oauth.server.dao.DynamoDBPartnerDetailsDAO;
 import java.util.Map;
+
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -39,6 +41,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @author Lucun Cai
  */
 @RestController
+@Log4j2
 public class ReciprocalAuthorizationEndpoint {
 
     private static final String GRANT_TYPE = "reciprocal_authorization_code";
@@ -58,6 +61,7 @@ public class ReciprocalAuthorizationEndpoint {
         String partnerId = parameters.get("client_id");
         String authorizationCode = parameters.get("code");
 
+        log.info("Starting reciprocal authorize for partner {}", partnerId);
         if (!StringUtils.equals(grantType, GRANT_TYPE)) {
             throw new UnsupportedGrantTypeException("Only reciprocal_authorization_code is supported in this endpoint");
         }
@@ -76,6 +80,7 @@ public class ReciprocalAuthorizationEndpoint {
         OAuth2AccessToken accessToken = tokenProvider.obtainAccessToken(resourceDetails,
             createAccessTokenRequest(authorizationCode));
 
+        log.info("Starting saving token for Reciprocal");
         partnerTokenRepository.saveAccessToken(resourceDetails, auth, accessToken);
     }
 

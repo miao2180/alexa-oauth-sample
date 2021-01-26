@@ -45,19 +45,18 @@
                 <div class="form-group">
                     <label for="password">Password</label>:
                     <input type="password" id="password" class="form-control" name="password" placeholder="Password"/>
-
                 </div>
                 <div class="form-group">
-                    <div class="row">
-                        <div class="col-sm-6 col-sm-offset-3">
+                    <span class="row">
+                        <span class="col-sm-6 col-sm-offset-3">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                             <input type="submit"
                                    name="login-submit"
                                    id="login-submit"
                                    class="form-control btn btn-info"
                                    value="Log In">
-                        </div>
-                    </div>
+                        </span>
+                    </span>
                 </div>
             </form>
         </div>

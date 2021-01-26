@@ -12,5 +12,6 @@ package com.oauth.server.authentication;
  */
 public enum RoleEnum {
     ROLE_USER_ADMIN, //A role for administrators to manage clients and partners.
-    ROLE_CLIENT_ADMIN //A role for an internal administration OAuth client.
+    ROLE_CLIENT_ADMIN, //A role for an internal administration OAuth client.
+    UNVERIFIED_USER //A role requires to reset the password
 }

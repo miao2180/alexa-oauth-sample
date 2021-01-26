@@ -7,7 +7,7 @@ logging:
   level:
     org:
       springframework:
-        security: DEBUG
+        security: INFO
         web:
           filter:
-            CommonsRequestLoggingFilter: DEBUG
+            CommonsRequestLoggingFilter: INFO

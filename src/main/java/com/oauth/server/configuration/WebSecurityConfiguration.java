@@ -32,7 +32,7 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(WebSecurity web) throws Exception {
-        web.ignoring().antMatchers("/webjars/**", "/resources/**");
+        web.ignoring().antMatchers("/webjars/**", "/resources/**", "/create_user_form");
 
     }
 
@@ -40,7 +40,7 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http
             .authorizeRequests()
-            .mvcMatchers("/login", "/logout.do", "/css/**", "/js/**", "/actuator/**").permitAll()
+            .mvcMatchers("/login", "/logout.do", "/css/**", "/js/**", "/actuator/**", "/register", "/create_user_form").permitAll()
             .mvcMatchers("/clients/**", "/partners/**").hasAuthority(RoleEnum.ROLE_USER_ADMIN.name())
             .anyRequest().authenticated()
             .and()
